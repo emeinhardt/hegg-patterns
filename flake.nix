@@ -12,6 +12,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
 
         # Change 945 appropriately to select a different GHC version
+        # Check `nix-env -f "<nixpkgs>" -qaP -A haskell.compiler` to see available versions.
         haskellPackages = pkgs.haskell.packages.ghc945;
 
         jailbreakUnbreak = pkg:
@@ -21,7 +22,6 @@
       in {
         packages.${packageName} =
           haskellPackages.callCabal2nix packageName self rec {
-            # Dependency overrides go here
           };
 
         packages.default = self.packages.${system}.${packageName};
@@ -30,11 +30,13 @@
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
 
+            cabal-install
+
             haskellPackages.haskell-language-server
+
             haskellPackages.hlint
             haskellPackages.stylish-haskell
             haskellPackages.hindent
-            cabal-install
 
             # Optional: Only needed to make use of ./justfile
             just

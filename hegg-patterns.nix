@@ -4,6 +4,7 @@ mkDerivation {
   version = "0.1.0.0";
   src = ./.;
   libraryHaskellDepends = [ base hegg ];
-  description = "Rewrite rules for common algebraic identities, for use with [hegg](https://hackage.haskell.org/package/hegg).";
+  homepage = "https://github.com/emeinhardt/hegg-patterns";
+  description = "E-graph rewrite rules for common algebraic identities, for use with hegg";
   license = lib.licenses.mit;
 }
