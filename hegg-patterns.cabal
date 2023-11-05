@@ -1,0 +1,31 @@
+cabal-version:      3.0
+name:               hegg-patterns
+version:            0.1.0.0
+synopsis:
+  E-graph rewrite rules for common algebraic identities, for use with hegg.
+
+description:
+  E-graph [@Rewrite@ rules](https://hackage.haskell.org/package/hegg-0.4.0.0/docs/Data-Equality-Saturation-Rewrites.html#t:Rewrite)
+  associated with common algebraic identities, for use with [hegg](https://hackage.haskell.org/package/hegg).
+license:            MIT
+license-file:       LICENSE
+author:             Eric Meinhardt
+maintainer:         ericmeinhardt@gmail.com
+copyright:          2023
+category:           Data
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md
+
+common warnings
+  ghc-options:
+    -Wall -Wdefault -Wno-orphans -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat
+
+library
+  import:             warnings
+  default-language:   GHC2021
+  default-extensions: UnicodeSyntax
+  hs-source-dirs:     src
+  exposed-modules:    Data.Equality.Matching.Pattern.Extras
+  build-depends:
+        base ^>=4.17.1.0
+      , hegg                        ==0.4.*
