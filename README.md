@@ -1,7 +1,17 @@
 # `hegg-patterns`
 
-E-graph rewrite rules for common algebraic identities over common DSL types , for use with [hegg](https://hackage.haskell.org/package/hegg). See that package's documentation for an introduction to 
-e-graphs and to `hegg`'s interface.
+E-graph rewrite rules for common algebraic identities over a common DSL schema, for use with [hegg](https://hackage.haskell.org/package/hegg):
+
+ - Right and left identity elements.
+ - Right and left absorbing elements.
+ - Idempotency.
+ - Commutativity.
+ - Distributivity.
+ - Involution.
+ - Fixpoints.
+
+See that package's documentation for an introduction to e-graphs and to `hegg`'s interface.
+
 
 ## Example
 
@@ -10,6 +20,8 @@ some functions lifting each base functor constructor into a [`Pattern`](https://
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
+module MyDslDemo where
+
 import Data.Equality.Matching.Pattern 
   ( Pattern
   , pat
@@ -18,47 +30,54 @@ import Data.Equality.Saturation
   ( Rewrite ( (:=)
             )
   )
-module MyDslDemo where
-
+  
+-- A sample of the rewrites provided by this package:
+import Data.Equality.Matching.Pattern.Extras
+  ( unit
+  , comm
+  , dist
+  , unDist
+  )
+  
 data Lattice a where
-  Val  ∷ a → Lattice a
-  Bot  ∷ Lattice a
-  Top  ∷ Lattice a
-  Meet ∷ Lattice a → Lattice a → Lattice a
-  Join ∷ Lattice a → Lattice a → Lattice a
-  Comp ∷ Lattice a → Lattice a
+  Val  :: a -> Lattice a
+  Bot  :: Lattice a
+  Top  :: Lattice a
+  Meet :: Lattice a -> Lattice a -> Lattice a
+  Join :: Lattice a -> Lattice a -> Lattice a
+  Comp :: Lattice a -> Lattice a
   deriving Functor
 
 data LatticeF a b where
-  ValF  ∷ a → LatticeF a b
-  BotF  ∷ LatticeF a b
-  TopF  ∷ LatticeF a b
-  MeetF ∷ b → b → LatticeF a b
-  JoinF ∷ b → b → LatticeF a b
-  CompF ∷ b → LatticeF a b
+  ValF  :: a -> LatticeF a b
+  BotF  :: LatticeF a b
+  TopF  :: LatticeF a b
+  MeetF :: b -> b -> LatticeF a b
+  JoinF :: b -> b -> LatticeF a b
+  CompF :: b -> LatticeF a b
   deriving Functor
 
-valP ∷ ∀ a. a → Pattern (LatticeF a)
+valP :: forall a. a -> Pattern (LatticeF a)
 valP = pat . ValF
 
-botP, topP ∷ ∀ a. Pattern (LatticeF a)
+botP, topP :: forall a. Pattern (LatticeF a)
 botP = pat BotF
 topP = pat TopF
 
-compP ∷ ∀ a. Pattern (LatticeF a) → Pattern (LatticeF a)
+compP :: forall a. Pattern (LatticeF a) -> Pattern (LatticeF a)
 compP = pat . CompF
 
-meetP, joinP ∷ ∀ a. Pattern (LatticeF a) → Pattern (LatticeF a) → Pattern (LatticeF a)
+meetP, joinP :: forall a. Pattern (LatticeF a) -> Pattern (LatticeF a) -> Pattern (LatticeF a)
 meetP x y = pat (MeetF x y)
 joinP x y = pat (JoinF x y)
 ```
 
-...then the following functions together construct rewrite rules corresponding to some of the common algebraic
-identities that hold of Boolean lattices:
+...then the following functions use a few functions from this package to construct rewrite rules corresponding
+to some of the common algebraic identities that hold of Boolean lattices:
 
 ``` haskell
 
-meetUnit, meetComm, joinComm, meetJoinDist, unMeetJoinDist ∷ ∀ analysis a. Rewrite analysis (LatticeF a)
+meetUnit, meetComm, joinComm, meetJoinDist, unMeetJoinDist :: forall analysis a. Rewrite analysis (LatticeF a)
 {- | The top element of a bounded lattice is the identity of meet:  /∀ x, ⊤ ∧ x = x/.
 
 'meetUnit' is equivalent to the rewrite rule

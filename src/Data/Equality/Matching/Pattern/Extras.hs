@@ -8,54 +8,75 @@ Given the type below modeling a free Boolean lattice over @a@, the associated ba
 some functions lifting each base functor constructor into a 'Pattern'...
 
 @
-import Data.Equality.Matching.Pattern (Pattern, pat)
+import Data.Equality.Matching.Pattern
+  ( Pattern
+  , pat
+  )
+import Data.Equality.Saturation
+  ( Rewrite ( (:=)
+            )
+  )
+
+-- A sample of the rewrites provided by this package:
+import Data.Equality.Matching.Pattern.Extras
+  ( unit
+  , zero
+  , comm
+  , dist
+  , unDist
+  )
+
 
 data Lattice a where
-  Val  ∷ a → Lattice a
-  Bot  ∷ Lattice a
-  Top  ∷ Lattice a
-  Meet ∷ Lattice a → Lattice a → Lattice a
-  Join ∷ Lattice a → Lattice a → Lattice a
-  Comp ∷ Lattice a → Lattice a
+  Val  :: a -> Lattice a
+  Bot  :: Lattice a
+  Top  :: Lattice a
+  Meet :: Lattice a -> Lattice a -> Lattice a
+  Join :: Lattice a -> Lattice a -> Lattice a
+  Comp :: Lattice a -> Lattice a
   deriving Functor
 
 data LatticeF a b where
-  ValF  ∷ a → LatticeF a b
-  BotF  ∷ LatticeF a b
-  TopF  ∷ LatticeF a b
-  MeetF ∷ b → b → LatticeF a b
-  JoinF ∷ b → b → LatticeF a b
-  CompF ∷ b → LatticeF a b
+  ValF  :: a -> LatticeF a b
+  BotF  :: LatticeF a b
+  TopF  :: LatticeF a b
+  MeetF :: b -> b -> LatticeF a b
+  JoinF :: b -> b -> LatticeF a b
+  CompF :: b -> LatticeF a b
   deriving Functor
 
-valP ∷ ∀ a. a → Pattern (LatticeF a)
+valP :: forall a. a -> Pattern (LatticeF a)
 valP = pat . ValF
 
-botP, topP ∷ ∀ a. Pattern (LatticeF a)
+botP, topP :: forall a. Pattern (LatticeF a)
 botP = pat BotF
 topP = pat TopF
 
-compP ∷ ∀ a. Pattern (LatticeF a) → Pattern (LatticeF a)
+compP :: forall a. Pattern (LatticeF a) -> Pattern (LatticeF a)
 compP = pat . CompF
 
-meetP, joinP ∷ ∀ a. Pattern (LatticeF a) → Pattern (LatticeF a) → Pattern (LatticeF a)
+meetP, joinP :: forall a. Pattern (LatticeF a) -> Pattern (LatticeF a) -> Pattern (LatticeF a)
 meetP x y = pat (MeetF x y)
 joinP x y = pat (JoinF x y)
 @
 
-...then the following functions together construct rewrite rules corresponding to some of the common algebraic
-identities that hold of Boolean lattices:
+...then the following functions use a few functions from this module to construct rewrite rules corresponding to
+some of the common algebraic identities that hold of Boolean lattices:
 
 @
-meetUnit, meetZero, meetComm, joinComm, meetJoinDist ∷ ∀ analysis a. Rewrite analysis (LatticeF a)
-{- | The top element of a bounded lattice is the identity of meet: 'meetUnit' creates the rewrite rule
+meetUnit, meetZero, meetComm, joinComm, meetJoinDist :: forall analysis a. Rewrite analysis (LatticeF a)
+{- | The top element of a bounded lattice is the identity of meet:  /∀ x, ⊤ ∧ x = x/.
+
+'meetUnit' is equivalent to the rewrite rule
 
 > meetP topP "x" := "x"
 
+...reflecting one of the directions of the underlying identity — the "simplifying" one that reduces the
+number of nodes in the expression tree.
 -}
 meetUnit = unit meetP topP "x"
 
--- ...
+-- | This is the analgous rewrite rule for the identity of `join`.
 joinUnit = unit joinP botP "x"
 
 {- | The bottom element of a bounded lattice is the absorbing element (zero) of meet: 'meetZero' creates
@@ -63,25 +84,29 @@ the rewrite rule
 
 > meetP botP "x" := botP
 -}
-meetZero = mkZero meetP botP "x"
+meetZero = zero meetP botP "x"
 
--- ...
-joinZero = mkZero joinP topP "x"
+-- | This is the analgous rewrite rule for the absorbing element of `join`.
+joinZero = zero joinP topP "x"
 
-{- | Equivalent to
+{- | Meet is commutative. Equivalent to
 
-> meetP "x" y := meetP "y" "x" -}
+> meetP "x" y := meetP "y" "x"
+
+-}
 meetComm = comm meetP "x" "y"
 
--- ...
+-- | Join is also commutative...
 joinComm = comm joinP "x" "y"
 
-{- | Equivalent to
+{- | This rule creates one of the two directions of the identity reflecting that /meet distributes over join/.
 
-> "x" `meetP` ("y" `joinP` "z") := ("x" `meetP` "y") `joinP` ("x" `meetP` "z")-}
+> "x" `meetP` ("y" `joinP` "z") := ("x" `meetP` "y") `joinP` ("x" `meetP` "z")
+-}
 meetJoinDist = dist meetP joinP "x" "y" "z"
--- ...
-joinMeetDist = dist joinP meetP "x" "y" "z"
+
+-- | This rule generates the other direction of the /meet-distributes-over-join/ identity.
+unMeetJoinDist = unDist meetP joinP "x" "y" "z"
 
 @
 
